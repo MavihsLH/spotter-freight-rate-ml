@@ -12,16 +12,16 @@ To prevent future data leakage, evaluation was performed using a strict **Out-Of
 
 ### Benchmark Comparison (Out-Of-Time Validation)
 
-| Model Architecture | Target Formulation | MAE ($) | RMSE ($) | WAPE (%) | $R^2$ |
+| Model Architecture | Target Formulation | MAE (USD) | RMSE (USD) | WAPE (%) | R² |
 | :--- | :--- | :---: | :---: | :---: | :---: |
-| **0. Naive Baseline** | $\text{Distance} \times \text{Quote Signal}$ | $246.02 | $711.80 | 10.28% | 0.7824 |
-| **1. Ridge Regression** | Direct $\text{posted\_rate}$ | $183.41 | $652.14 | 7.67% | 0.8174 |
-| **2. Direct LightGBM** | Direct $\text{posted\_rate}$ | $144.44 | $640.42 | 6.04% | 0.8239 |
-| **3. LightGBM (Multiplier)** | Residual Multiplier $M$ | $125.61 | $637.39 | 5.25% | 0.8255 |
-| **4. XGBoost (Multiplier)** | Residual Multiplier $M$ | $129.18 | $638.63 | 5.40% | 0.8249 |
-| **5. Blended Ensemble (LGBM + XGB)** | **Weighted Multiplier $M$** | **$123.64** | **$636.77** | **5.17%** | **0.8259** |
+| **0. Naive Baseline** | Distance × Quote Signal | $246.02 | $711.80 | 10.28% | 0.7824 |
+| **1. Ridge Regression** | Direct `posted_rate` | $183.41 | $652.14 | 7.67% | 0.8174 |
+| **2. Direct LightGBM** | Direct `posted_rate` | $144.44 | $640.42 | 6.04% | 0.8239 |
+| **3. LightGBM (Multiplier)** | Residual Multiplier `M` | $125.61 | $637.39 | 5.25% | 0.8255 |
+| **4. XGBoost (Multiplier)** | Residual Multiplier `M` | $129.18 | $638.63 | 5.40% | 0.8249 |
+| **5. Blended Ensemble (LGBM + XGB)** | **Weighted Multiplier `M`** | **$123.64** | **$636.77** | **5.17%** | **0.8259** |
 
-> **Key Result:** The residual multiplier formulation cut prediction error almost in half compared to the baseline ($246.02 $\to$ $123.64 MAE), achieving an industry-leading WAPE of **5.17%**.
+> **Key Result:** The residual multiplier formulation cut prediction error almost in half compared to the baseline ($246.02 &rarr; $123.64 MAE), achieving an industry-leading WAPE of **5.17%**.
 
 ---
 
@@ -29,7 +29,7 @@ To prevent future data leakage, evaluation was performed using a strict **Out-Of
 
 1. **Negative Weight Anomaly (Sign-Inversion Bug):**
    * Identified 292 negative weights in `train-test.csv` (e.g. `-36559.0` lbs) and 145 in `validation.csv`.
-   * Statistical density analysis confirmed $|weight|$ aligns identically with normal commercial freight weights.
+   * Statistical density analysis confirmed `|weight|` aligns identically with normal commercial freight weights.
    * **Solution:** Rectified via `abs(weight)` to salvage all 437 loads, followed by equipment-specific median imputation for true missing values.
 2. **Cold-Start Geospatial Generalization:**
    * **8 cities** in the validation set never appeared in the historical training data (*Chicago, Charlotte, San Diego, Laredo, Allentown, Jackson, Knoxville, Norfolk*).
@@ -39,8 +39,8 @@ To prevent future data leakage, evaluation was performed using a strict **Out-Of
    * Macro `market_index` shifts from spring peaks (1.40) to autumn contraction (0.80–1.00). Random K-Fold CV creates temporal leakage by conditioning on future market states.
    * **Solution:** Implemented an Out-Of-Time (OOT) split (Jan–Aug train, Sep–Oct validation).
 4. **Multiplier Target Reformulation:**
-   * `quote_signal` approximates spot rate-per-mile ($\text{Base} = \text{distance} \times \text{quote\_signal}$, baseline $R^2 \approx 0.794$).
-   * Rather than predicting raw, unbounded dollar rates, our models predict the tight pricing multiplier $M = \frac{\text{posted\_rate}}{\text{Base}}$ (centered at 1.004). This dramatically stabilizes gradient tree splits and suppresses extreme variance.
+   * `quote_signal` approximates spot rate-per-mile (`Base = distance × quote_signal`, baseline R² ≈ 0.794).
+   * Rather than predicting raw, unbounded dollar rates, our models predict the tight pricing multiplier `M = posted_rate / Base` (centered at 1.004). This dramatically stabilizes gradient tree splits and suppresses extreme variance.
 
 ---
 
@@ -50,7 +50,7 @@ Running `score.py` validates both `validation_predictions.csv` and `december-cha
 
 ![December 2025 Prediction Chart](scorer_results/candidate_december.png)
 
-* **Lane:** Lexington $\to$ Fort Wayne (360 miles, Dry Van, 32,000 lbs).
+* **Lane:** Lexington &rarr; Fort Wayne (360 miles, Dry Van, 32,000 lbs).
 * **Behavior:** Captured intra-week demand cycles (mid-week peaks on Wednesday/Thursday, weekend drops on Saturday/Sunday) and end-of-year holiday capacity surges, averaging a realistic **$785 – $805** spot rate ($2.18 – $2.24/mi).
 
 ---

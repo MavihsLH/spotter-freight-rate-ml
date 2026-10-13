@@ -10,16 +10,16 @@ This report documents an end-to-end Machine Learning pipeline designed to predic
 
 ### Core Achievement & Benchmark Comparison
 
-Rather than predicting raw, unbounded dollar rates directly, we formulated the modeling objective to target the **residual pricing multiplier** $M = \frac{\text{posted\_rate}}{\text{distance} \times \text{quote\_signal}}$. On our strict Out-Of-Time validation holdout (Sep–Oct 2025), our blended LightGBM and XGBoost ensemble reduced error from **$246.02 MAE** (naive baseline) down to **$123.64 MAE**, achieving a Weighted Absolute Percentage Error (WAPE) of **5.17%** and an $R^2$ of **0.8259**.
+Rather than predicting raw, unbounded dollar rates directly, we formulated the modeling objective to target the **residual pricing multiplier** `M = posted_rate / (distance × quote_signal)`. On our strict Out-Of-Time validation holdout (Sep–Oct 2025), our blended LightGBM and XGBoost ensemble reduced error from **$246.02 MAE** (naive baseline) down to **$123.64 MAE**, achieving a Weighted Absolute Percentage Error (WAPE) of **5.17%** and an R² of **0.8259**.
 
-| Model Architecture | Target Formulation | MAE ($) | RMSE ($) | WAPE (%) | $R^2$ Score |
+| Model Architecture | Target Formulation | MAE (USD) | RMSE (USD) | WAPE (%) | R² Score |
 | :--- | :--- | :---: | :---: | :---: | :---: |
-| **0. Naive Baseline** | $\text{Distance} \times \text{Quote Signal}$ | $246.02 | $711.80 | 10.28% | 0.7824 |
-| **1. Ridge Regression** | Direct $\text{posted\_rate}$ | $183.41 | $652.14 | 7.67% | 0.8174 |
-| **2. Direct LightGBM** | Direct $\text{posted\_rate}$ | $144.44 | $640.42 | 6.04% | 0.8239 |
-| **3. LightGBM (Multiplier)** | Residual Multiplier $M$ | $125.61 | $637.39 | 5.25% | 0.8255 |
-| **4. XGBoost (Multiplier)** | Residual Multiplier $M$ | $129.18 | $638.63 | 5.40% | 0.8249 |
-| **5. Blended Ensemble** | **Weighted Multiplier $M$** | **$123.64** | **$636.77** | **5.17%** | **0.8259** |
+| **0. Naive Baseline** | Distance × Quote Signal | $246.02 | $711.80 | 10.28% | 0.7824 |
+| **1. Ridge Regression** | Direct `posted_rate` | $183.41 | $652.14 | 7.67% | 0.8174 |
+| **2. Direct LightGBM** | Direct `posted_rate` | $144.44 | $640.42 | 6.04% | 0.8239 |
+| **3. LightGBM (Multiplier)** | Residual Multiplier `M` | $125.61 | $637.39 | 5.25% | 0.8255 |
+| **4. XGBoost (Multiplier)** | Residual Multiplier `M` | $129.18 | $638.63 | 5.40% | 0.8249 |
+| **5. Blended Ensemble** | **Weighted Multiplier `M`** | **$123.64** | **$636.77** | **5.17%** | **0.8259** |
 
 ---
 
@@ -27,7 +27,7 @@ Rather than predicting raw, unbounded dollar rates directly, we formulated the m
 
 1. **Negative Weight Bug (Sign Inversion):**
    * Identified **292 negative weights** in `train-test.csv` (e.g. `-36559.0` lbs) and **145** in `validation.csv`.
-   * Density analysis confirmed $|weight|$ matches the true cargo distribution identically (spanning 10,000 to 50,000 lbs).
+   * Density analysis confirmed `|weight|` matches the true cargo distribution identically (spanning 10,000 to 50,000 lbs).
    * Rectified via `abs(weight)`, salvaging all 437 loads. Remaining true NaNs (300 in train, 165 in val) were imputed with equipment-specific medians.
 2. **Cold-Start Unseen Cities:**
    * **8 cities** in validation (*Chicago, Charlotte, San Diego, Laredo, Allentown, Jackson, Knoxville, Norfolk*) never appeared in training.
@@ -53,13 +53,15 @@ We established a strict chronological partition: training on **Jan 1 &ndash; Aug
 
 ## 4. Modeling Architecture & Residual Multiplier Formulation
 
-In freight logistics, `quote_signal` is an empirical rate-per-mile signal. The baseline product $\text{Base} = \text{distance} \times \text{quote\_signal}$ accounts for 78.2% of total price variation. Direct regression of raw dollar rates creates heavy variance in leaf split criteria.
+In freight logistics, `quote_signal` is an empirical rate-per-mile signal. The baseline product `Base = distance × quote_signal` accounts for 78.2% of total price variation. Direct regression of raw dollar rates creates heavy variance in leaf split criteria.
 
 ### Target Reformulation
-We model the scale-invariant pricing multiplier $M$:
-$$\text{posted\_rate} = (\text{distance} \times \text{quote\_signal}) \times M$$
+We model the scale-invariant pricing multiplier `M`:
+```text
+posted_rate = (distance × quote_signal) × M
+```
 
-The empirical distribution of $M$ is centered tightly at **1.004**. Our Gradient Boosted Decision Trees (LightGBM and XGBoost) predict this residual multiplier, learning equipment premiums (+12.3% for Reefers), cargo weight penalties, and intra-week tendering cycles. A 60/40 blend of LightGBM and XGBoost delivers optimal generalization.
+The empirical distribution of `M` is centered tightly at **1.004**. Our Gradient Boosted Decision Trees (LightGBM and XGBoost) predict this residual multiplier, learning equipment premiums (+12.3% for Reefers), cargo weight penalties, and intra-week tendering cycles. A 60/40 blend of LightGBM and XGBoost delivers optimal generalization.
 
 ![Rate Mechanics and Multiplier](eda_visualizations/05_pricing_mechanics_and_baseline.png)
 

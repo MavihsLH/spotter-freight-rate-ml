@@ -44,9 +44,9 @@ This directory contains 6 publication-grade diagnostic charts created for the **
 ### 5. `05_pricing_mechanics_and_baseline.png`
 * **File:** [05_pricing_mechanics_and_baseline.png](05_pricing_mechanics_and_baseline.png)
 * **Diagnostic Insight:**
-  * Left: Scatter of actual posted rate versus the naive baseline ($\text{Distance} \times \text{Quote Signal}$), confirming a base $R^2 \approx 0.794$.
-  * Right: Distribution of the pricing multiplier ($\frac{\text{posted\_rate}}{\text{Base}}$), showing an ultra-tight center at **1.004**.
-* **Remedy:** Reformulated target to predict the scale-invariant multiplier $M$, cutting MAE in half.
+  * Left: Scatter of actual posted rate versus the naive baseline (`Distance × Quote Signal`), confirming a base R² ≈ 0.794.
+  * Right: Distribution of the pricing multiplier (`posted_rate / Base`), showing an ultra-tight center at **1.004**.
+* **Remedy:** Reformulated target to predict the scale-invariant multiplier `M`, cutting MAE in half.
 
 ---
 
